@@ -6,44 +6,53 @@ from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 import nltk
 
-# Download necessary NLTK resources
-nltk.download('punkt')
-nltk.download('stopwords')
-nltk.download('wordnet')
+# Ensure required NLTK resources are downloaded
+try:
+    nltk.data.find('tokenizers/punkt')
+except LookupError:
+    nltk.download('punkt')
+
+try:
+    nltk.data.find('corpora/stopwords')
+except LookupError:
+    nltk.download('stopwords')
+
+try:
+    nltk.data.find('corpora/wordnet')
+except LookupError:
+    nltk.download('wordnet')
 
 # Preprocessing function
 def preprocess(text):
     text = text.lower()
-    text = re.sub(r'[\n\t\r]', ' ', text)  # Remove newline, tab, and carriage return characters
-    text = re.sub(r'http\S+|www\S+|https\S+', '', text, flags=re.MULTILINE)  # Remove URLs
-    text = re.sub(r'@\w+|#\w+', '', text)  # Remove mentions and hashtags
-    text = re.sub(r'[^a-zA-Z\s]', '', text)  # Remove special characters
-    text = re.sub(r'\s+', ' ', text).strip()  # Remove extra spaces
-    text = text.encode('ascii', 'ignore').decode('ascii')  # Handle encoding issues
+    text = re.sub(r'[\n\t\r]', ' ', text)
+    text = re.sub(r'http\S+|www\S+|https\S+', '', text, flags=re.MULTILINE)
+    text = re.sub(r'@\w+|#\w+', '', text)
+    text = re.sub(r'[^a-zA-Z\s]', '', text)
+    text = re.sub(r'\s+', ' ', text).strip()
+    text = text.encode('ascii', 'ignore').decode('ascii')
     tokens = word_tokenize(text)
     stop_words = set(stopwords.words('english'))
-    tokens = [word for word in tokens if word not in stop_words]  # Remove stopwords
+    tokens = [word for word in tokens if word not in stop_words]
     lemmatizer = WordNetLemmatizer()
-    tokens = [lemmatizer.lemmatize(word) for word in tokens]  # Lemmatize tokens
+    tokens = [lemmatizer.lemmatize(word) for word in tokens]
     return ' '.join(tokens)
 
 # Load the trained KNN model, TF-IDF vectorizer, and label encoder
-try:
-    with open('knn_model.pkl', 'rb') as model_file:
-        knn_loaded = pickle.load(model_file)
-    with open('vectorizer.pkl', 'rb') as vectorizer_file:
-        vectorizer_loaded = pickle.load(vectorizer_file)
-    with open('label_encoder.pkl', 'rb') as le_file:
-        le_loaded = pickle.load(le_file)
-except Exception as e:
-    st.write(f"Error loading models or resources: {e}")
-    st.stop()  # Stop the app if the models can't be loaded
+with open('knn_model.pkl', 'rb') as model_file:
+    knn_loaded = pickle.load(model_file)
+
+with open('vectorizer.pkl', 'rb') as vectorizer_file:
+    vectorizer_loaded = pickle.load(vectorizer_file)
+
+with open('label_encoder.pkl', 'rb') as le_file:
+    le_loaded = pickle.load(le_file)
 
 # Streamlit app
 st.title('Resume Category Prediction')
 
 # Text area for resume input
-resume_text = st.text_area("Enter the resume plain text below:", max_chars=2000)
+resume_text = st.text_area("Enter the resume text below:")
 
 if st.button("Predict"):
     if resume_text:
@@ -62,5 +71,4 @@ if st.button("Predict"):
         # Display the predicted category
         st.write(f"**Predicted Category:** {predicted_category[0]}")
     else:
-        st.write("Please enter some resume plain text to predict.")
-
+        st.write("Please enter some resume text to predict.")
